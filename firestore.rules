@@ -1,0 +1,78 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: users
+    // Document ID: {userId} (Firebase Auth UID)
+    // Fields:
+    //   - columns: list (required) - Array of {id, name} objects
+    //   - subjects: list (required) - Array of subject objects with chapters and progress
+    //   - updatedAt: timestamp (optional)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isValidColumn(column) {
+      return column is map &&
+             column.id is string && column.id.size() > 0 && column.id.size() < 100 &&
+             column.name is string && column.name.size() > 0 && column.name.size() < 100;
+    }
+
+    function isValidChapter(chapter) {
+      return chapter is map &&
+             chapter.id is string && chapter.id.size() > 0 && chapter.id.size() < 100 &&
+             chapter.name is string && chapter.name.size() > 0 && chapter.name.size() < 200 &&
+             chapter.progress is map;
+    }
+
+    function isValidSubject(subject) {
+      return subject is map &&
+             subject.id is string && subject.id.size() > 0 && subject.id.size() < 100 &&
+             subject.name is string && subject.name.size() > 0 && subject.name.size() < 200 &&
+             subject.chapters is list && subject.chapters.size() < 200;
+    }
+
+    function isValidUserData(data) {
+      return data.keys().hasAll(['columns', 'subjects']) &&
+             data.columns is list && data.columns.size() < 50 &&
+             data.subjects is list && data.subjects.size() < 50;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      // Users can only read their own data
+      allow read: if isOwner(userId);
+      
+      // Users can only create/update their own data with validation
+      allow create: if isOwner(userId) && isValidUserData(request.resource.data);
+      allow update: if isOwner(userId) && isValidUserData(request.resource.data);
+      
+      // Deletion is allowed by owner
+      allow delete: if isOwner(userId);
+    }
+
+    // Default deny
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

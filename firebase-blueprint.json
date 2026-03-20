@@ -1,0 +1,56 @@
+{
+  "entities": {
+    "UserData": {
+      "title": "User Data",
+      "description": "User's syllabus tracking data including columns and subjects.",
+      "type": "object",
+      "properties": {
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" }
+            },
+            "required": ["id", "name"]
+          }
+        },
+        "subjects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "name": { "type": "string" },
+              "chapters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "progress": {
+                      "type": "object",
+                      "additionalProperties": { "type": "boolean" }
+                    }
+                  },
+                  "required": ["id", "name", "progress"]
+                }
+              }
+            },
+            "required": ["id", "name", "chapters"]
+          }
+        },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["columns", "subjects"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserData",
+      "description": "User-specific data for syllabus tracking."
+    }
+  }
+}
