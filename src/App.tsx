@@ -262,18 +262,21 @@ export default function App() {
         if (docSnap.exists()) {
           const cloudData = docSnap.data() as AppData;
           setData(cloudData);
-          if (!activeSubjectId && cloudData.subjects.length > 0) {
-            setActiveSubjectId(cloudData.subjects[0].id);
-          }
+          // Use functional update to avoid stale closure of activeSubjectId
+          setActiveSubjectId(prev => {
+            if (prev) return prev;
+            return cloudData.subjects.length > 0 ? cloudData.subjects[0].id : '';
+          });
         } else {
           // New user, check for local data to migrate
           const localDataStr = localStorage.getItem(LOCAL_STORAGE_KEY);
           const initialData = localDataStr ? JSON.parse(localDataStr) : DEFAULT_DATA;
           setDoc(userDocRef, initialData).catch(console.error);
           setData(initialData);
-          if (initialData.subjects.length > 0) {
-            setActiveSubjectId(initialData.subjects[0].id);
-          }
+          setActiveSubjectId(prev => {
+            if (prev) return prev;
+            return initialData.subjects.length > 0 ? initialData.subjects[0].id : '';
+          });
         }
         setIsLoading(false);
       }, (error) => {
@@ -289,17 +292,18 @@ export default function App() {
         try {
           const parsed = JSON.parse(localDataStr);
           setData(parsed);
-          if (parsed.subjects.length > 0) {
-            setActiveSubjectId(parsed.subjects[0].id);
-          }
+          setActiveSubjectId(prev => {
+            if (prev) return prev;
+            return parsed.subjects.length > 0 ? parsed.subjects[0].id : '';
+          });
         } catch (e) {
           console.error("Failed to parse local data", e);
           setData(DEFAULT_DATA);
-          setActiveSubjectId(DEFAULT_DATA.subjects[0].id);
+          setActiveSubjectId(prev => prev || (DEFAULT_DATA.subjects[0]?.id || ''));
         }
       } else {
         setData(DEFAULT_DATA);
-        setActiveSubjectId(DEFAULT_DATA.subjects[0].id);
+        setActiveSubjectId(prev => prev || (DEFAULT_DATA.subjects[0]?.id || ''));
       }
       setIsLoading(false);
     }
