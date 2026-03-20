@@ -222,6 +222,7 @@ export default function App() {
   const [data, setData] = useState<AppData>(DEFAULT_DATA);
   const [activeSubjectId, setActiveSubjectId] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Modal States
   const [promptConfig, setPromptConfig] = useState<{
@@ -559,6 +560,18 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
+            <button
+              onClick={() => setIsEditMode(!isEditMode)}
+              className={cn(
+                "px-4 py-2 rounded-xl text-xs font-bold transition-all active:scale-95 border",
+                isEditMode 
+                  ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20 shadow-[0_0_15px_rgba(79,70,229,0.2)]" 
+                  : "bg-white/5 text-white/40 border-white/5 hover:text-white/60"
+              )}
+            >
+              {isEditMode ? "EXIT EDIT" : "EDIT MODE"}
+            </button>
+
             <div className="flex items-center bg-white/5 rounded-2xl p-1 border border-white/5">
               <button 
                 onClick={handleExport}
@@ -627,7 +640,7 @@ export default function App() {
                   )}
                   <span className="relative z-10 flex items-center gap-2">
                     {subject.name}
-                    {isActive && (
+                    {isActive && isEditMode && (
                       <span className="flex gap-1.5 ml-2">
                         <Edit2 
                           size={12} 
@@ -662,17 +675,19 @@ export default function App() {
                 </button>
               );
             })}
-            <button 
-              className="px-5 py-3 text-white/50 hover:text-white hover:bg-white/5 rounded-xl transition-colors" 
-              onClick={() => setPromptConfig({
-                isOpen: true,
-                title: 'New Subject',
-                placeholder: 'Enter subject name...',
-                onSubmit: handleAddSubject
-              })}
-            >
-              <Plus size={18} />
-            </button>
+            {isEditMode && (
+              <button 
+                className="px-5 py-3 text-white/50 hover:text-white hover:bg-white/5 rounded-xl transition-colors" 
+                onClick={() => setPromptConfig({
+                  isOpen: true,
+                  title: 'New Subject',
+                  placeholder: 'Enter subject name...',
+                  onSubmit: handleAddSubject
+                })}
+              >
+                <Plus size={18} />
+              </button>
+            )}
           </div>
         </section>
 
@@ -687,61 +702,67 @@ export default function App() {
                       <th className="p-6 text-left font-semibold text-white/40 uppercase tracking-widest text-xs min-w-[250px]">
                         <div className="flex items-center justify-between">
                           <span>Module</span>
-                          <button 
-                            onClick={() => setPromptConfig({
-                              isOpen: true,
-                              title: 'New Chapter',
-                              placeholder: 'Chapter Name',
-                              onSubmit: handleAddChapter
-                            })}
-                            className="p-1.5 bg-white/5 text-white/70 rounded-lg hover:bg-white/10 hover:text-white transition-all active:scale-95"
-                          >
-                            <Plus size={14} />
-                          </button>
+                          {isEditMode && (
+                            <button 
+                              onClick={() => setPromptConfig({
+                                isOpen: true,
+                                title: 'New Chapter',
+                                placeholder: 'Chapter Name',
+                                onSubmit: handleAddChapter
+                              })}
+                              className="p-1.5 bg-white/5 text-white/70 rounded-lg hover:bg-white/10 hover:text-white transition-all active:scale-95"
+                            >
+                              <Plus size={14} />
+                            </button>
+                          )}
                         </div>
                       </th>
                       {data.columns.map(col => (
                         <th key={col.id} className="p-6 text-center font-semibold text-white/40 uppercase tracking-widest text-xs min-w-[140px] group relative">
                           {col.name}
-                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button 
-                              onClick={() => setPromptConfig({
-                                isOpen: true,
-                                title: 'Rename Column',
-                                placeholder: 'Column Name',
-                                initialValue: col.name,
-                                onSubmit: (val) => handleEditColumn(col.id, val)
-                              })}
-                              className="p-1 bg-[#111] border border-white/10 rounded-md text-white/70 hover:text-white"
-                            >
-                              <Edit2 size={10} />
-                            </button>
-                            <button 
-                              onClick={() => setConfirmConfig({
-                                isOpen: true,
-                                title: 'Delete Column',
-                                message: `Delete column "${col.name}"? This will remove progress for all subjects.`,
-                                onConfirm: () => handleDeleteColumn(col.id)
-                              })}
-                              className="p-1 bg-[#111] border border-white/10 rounded-md text-red-400 hover:text-red-300"
-                            >
-                              <Trash2 size={10} />
-                            </button>
-                          </div>
+                          {isEditMode && (
+                            <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button 
+                                onClick={() => setPromptConfig({
+                                  isOpen: true,
+                                  title: 'Rename Column',
+                                  placeholder: 'Column Name',
+                                  initialValue: col.name,
+                                  onSubmit: (val) => handleEditColumn(col.id, val)
+                                })}
+                                className="p-1 bg-[#111] border border-white/10 rounded-md text-white/70 hover:text-white"
+                              >
+                                <Edit2 size={10} />
+                              </button>
+                              <button 
+                                onClick={() => setConfirmConfig({
+                                  isOpen: true,
+                                  title: 'Delete Column',
+                                  message: `Delete column "${col.name}"? This will remove progress for all subjects.`,
+                                  onConfirm: () => handleDeleteColumn(col.id)
+                                })}
+                                className="p-1 bg-[#111] border border-white/10 rounded-md text-red-400 hover:text-red-300"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </div>
+                          )}
                         </th>
                       ))}
                       <th className="p-6 w-16">
-                        <button 
-                          onClick={() => setPromptConfig({
-                            isOpen: true,
-                            title: 'New Task Column',
-                            placeholder: 'e.g., Final Review',
-                            onSubmit: handleAddColumn
-                          })}
-                          className="p-2 text-white/30 hover:text-white hover:bg-white/5 rounded-xl transition-all active:scale-95"
-                        >
-                          <Plus size={16} />
-                        </button>
+                        {isEditMode && (
+                          <button 
+                            onClick={() => setPromptConfig({
+                              isOpen: true,
+                              title: 'New Task Column',
+                              placeholder: 'e.g., Final Review',
+                              onSubmit: handleAddColumn
+                            })}
+                            className="p-2 text-white/30 hover:text-white hover:bg-white/5 rounded-xl transition-all active:scale-95"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        )}
                       </th>
                     </tr>
                   </thead>
@@ -768,31 +789,33 @@ export default function App() {
                           <td className="p-6">
                             <div className="flex items-center justify-between">
                               <span className="font-medium text-white/90">{chapter.name}</span>
-                              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button 
-                                  onClick={() => setPromptConfig({
-                                    isOpen: true,
-                                    title: 'Edit Chapter',
-                                    placeholder: 'Chapter Name',
-                                    initialValue: chapter.name,
-                                    onSubmit: (val) => handleEditChapter(chapter.id, val)
-                                  })}
-                                  className="p-1.5 text-white/30 hover:text-white transition-colors"
-                                >
-                                  <Edit2 size={14} />
-                                </button>
-                                <button 
-                                  onClick={() => setConfirmConfig({
-                                    isOpen: true,
-                                    title: 'Delete Chapter',
-                                    message: `Delete "${chapter.name}"?`,
-                                    onConfirm: () => handleDeleteChapter(chapter.id)
-                                  })}
-                                  className="p-1.5 text-red-400/50 hover:text-red-400 transition-colors"
-                                >
-                                  <Trash2 size={14} />
-                                </button>
-                              </div>
+                              {isEditMode && (
+                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button 
+                                    onClick={() => setPromptConfig({
+                                      isOpen: true,
+                                      title: 'Edit Chapter',
+                                      placeholder: 'Chapter Name',
+                                      initialValue: chapter.name,
+                                      onSubmit: (val) => handleEditChapter(chapter.id, val)
+                                    })}
+                                    className="p-1.5 text-white/30 hover:text-white transition-colors"
+                                  >
+                                    <Edit2 size={14} />
+                                  </button>
+                                  <button 
+                                    onClick={() => setConfirmConfig({
+                                      isOpen: true,
+                                      title: 'Delete Chapter',
+                                      message: `Delete "${chapter.name}"?`,
+                                      onConfirm: () => handleDeleteChapter(chapter.id)
+                                    })}
+                                    className="p-1.5 text-red-400/50 hover:text-red-400 transition-colors"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </td>
                           {data.columns.map(col => {
